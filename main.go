@@ -2,7 +2,7 @@ package main
 
 import "github.com/0xe8551ccb/github"
 
-var initURLs  = []string{
+var initialURLs = []string{
 	"https://github.com/niklasvh/html2canvas",
 	"https://github.com/zhoubear/open-paperless",
 	"https://github.com/uber-go/go-helix",
@@ -14,6 +14,6 @@ var initURLs  = []string{
 
 func main()  {
 	var c = github.GitProjectCrawler{}
-	c.Init("projects", 4, initURLs...)
+	c.Init("projects", 4, initialURLs...)
 	c.Run()
 }

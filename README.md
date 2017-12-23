@@ -3,6 +3,29 @@ GitHub Project Crawler
 
 A simple crawler written in Golang 1.9.
 
+# Simple entry
+
+```
+package main
+
+import "github.com/0xe8551ccb/github"
+
+var initialURLs = []string{
+	"https://github.com/niklasvh/html2canvas",
+	"https://github.com/zhoubear/open-paperless",
+	"https://github.com/uber-go/go-helix",
+	"https://github.com/btraceio/btrace",
+	"https://github.com/tipsy/github-profile-summary",
+	"https://github.com/tbroadley/github-spellcheck-cli",
+	"https://github.com/go-openapi/strfmt",
+	}
+
+func main()  {
+	var c = github.GitProjectCrawler{}
+	c.Init("projects", 4, initialURLs...)
+	c.Run()
+}
+```
 
 # How to run it?
 
