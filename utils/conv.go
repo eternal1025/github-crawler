@@ -12,4 +12,3 @@ func StrToInt(s string) int {
 	}
 	return val
 }
-

@@ -8,12 +8,12 @@ package gocrawler
 
 import (
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
 	"io"
 	"log"
 	"net/http"
-	"github.com/PuerkitoBio/goquery"
-	"time"
 	"sync"
+	"time"
 )
 
 type Request struct {

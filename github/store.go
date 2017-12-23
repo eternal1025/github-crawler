@@ -1,15 +1,15 @@
 package github
 
 import (
-	"path"
-	"os"
-	"log"
-	"io/ioutil"
 	"encoding/json"
 	"github.com/0xe8551ccb/utils"
+	"io/ioutil"
+	"log"
+	"os"
+	"path"
 )
 
-func SaveProjectItem(location string, project *ProjectItem)  {
+func SaveProjectItem(location string, project *ProjectItem) {
 	projectLocation := path.Join(location, project.Name)
 	err := os.MkdirAll(projectLocation, os.ModePerm)
 	if err != nil {
@@ -25,7 +25,7 @@ func SaveProjectItem(location string, project *ProjectItem)  {
 	ioutil.WriteFile(filename, jsonLine, os.ModePerm)
 }
 
-func SaveIssueItem(location string, issue *IssueItem)  {
+func SaveIssueItem(location string, issue *IssueItem) {
 	issueDir := path.Join(location, issue.ProjectName)
 	err := os.MkdirAll(issueDir, os.ModePerm)
 	if err != nil {
