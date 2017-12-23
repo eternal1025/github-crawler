@@ -61,7 +61,7 @@ func (c *GoCrawler) Init(name string, maxWorkers int, initialRequests []*Request
 }
 
 func (c *GoCrawler) Run() {
-	log.Printf("Go crawler is running with %d initial requests", len(c.initialRequests))
+	log.Printf("GoCrawler is running with %d initial requests", len(c.initialRequests))
 	c.worklist = make(chan []*Request)
 	c.seen = make(map[string]bool)
 	c.tokens = make(chan struct{}, c.maxWorkers)

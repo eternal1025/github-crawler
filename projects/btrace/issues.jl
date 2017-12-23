@@ -1,1 +1,0 @@
-{"project_name":"btrace","number":"#1","title":"[BTRACE-46] Tracing +java.util.Map#get method makes the BTrace engine crash (or loop endlessly - depends on situation)","issuer":"jbachorik","is_open":false,"issued_at":"2014-08-28T18:59:27Z","comment_count":0,"labels":["BTRACECore"]}

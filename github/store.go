@@ -33,14 +33,9 @@ func SaveIssueItem(location string, issue *IssueItem)  {
 	}
 
 	filename := path.Join(issueDir, "issues.jl")
-	err = utils.CreateFileIfNotExist(filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	buf, err := json.Marshal(issue)
 	if err != nil {
-		log.Fatalf("failed to marshal item %s\n", issue)
+		log.Printf("failed to marshal item %s\n", issue)
 	}
 
 	err = utils.AppendStringToFile(filename, string(buf), true)

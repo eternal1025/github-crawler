@@ -1,6 +1,8 @@
 package main
 
-import "github.com/0xe8551ccb/github"
+import (
+	"github.com/0xe8551ccb/github"
+)
 
 var initialURLs = []string{
 	"https://github.com/niklasvh/html2canvas",
