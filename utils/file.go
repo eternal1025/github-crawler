@@ -7,7 +7,6 @@ func AppendStringToFile(path, text string, newLine bool) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
 	if newLine {
 		text += "\n"
@@ -16,7 +15,7 @@ func AppendStringToFile(path, text string, newLine bool) error {
 	if err != nil {
 		return err
 	}
-	return nil
+	return f.Close()
 }
 
 func CreateFileIfNotExist(path string) error {
@@ -29,6 +28,5 @@ func CreateFileIfNotExist(path string) error {
 	if err != nil {
 		return err
 	}
-	f.Close()
-	return nil
+	return f.Close()
 }
