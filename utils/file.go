@@ -3,7 +3,8 @@ package utils
 import "os"
 
 func AppendStringToFile(path, text string, newLine bool) error {
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModeAppend)
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
+	defer f.Close()
 	if err != nil {
 		return err
 	}
@@ -12,8 +13,5 @@ func AppendStringToFile(path, text string, newLine bool) error {
 		text += "\n"
 	}
 	_, err = f.WriteString(text)
-	if err != nil {
-		return err
-	}
-	return f.Close()
+	return err
 }

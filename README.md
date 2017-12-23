@@ -23,9 +23,16 @@ var initialURLs = []string{
 func main()  {
 	var c = github.GitProjectCrawler{}
 	c.Init("projects", 4, initialURLs...)
-	c.Run()
+	c.Run(true)
 }
 ```
+
+
+# Features
+
+1. Auto retry any failed request
+2. Auto shutdown when there'is no pending request
+3. Simple auto-throttling strategies
 
 # How to run it?
 
@@ -56,10 +63,6 @@ func main()  {
     ```
     go run main.go
     ```
-
-# Issues
-
-1. The crawler cannot shutdown itself automatically when there'are no more requests to crawl.
 
 # Snapshot
 

@@ -19,7 +19,7 @@ type IssueItem struct {
 }
 
 func (i *IssueItem) String() string {
-	buf, err := json.MarshalIndent(i, "", "  ")
+	buf, err := json.Marshal(i)
 	if err != nil {
 		return fmt.Sprintf("%s: %d comments", i.Title, i.CommentCount)
 	}
@@ -37,7 +37,7 @@ type ProjectItem struct {
 }
 
 func (p *ProjectItem) String() string {
-	buf, err := json.MarshalIndent(p, "", "  ")
+	buf, err := json.Marshal(p)
 	if err != nil {
 		return fmt.Sprintf("%s: %d watches, %d stars, %d forks", p.Name, p.Watches, p.Stars, p.Watches)
 	}

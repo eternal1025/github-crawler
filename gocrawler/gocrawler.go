@@ -3,8 +3,6 @@
 // 1. 中间件
 // 2. 登录组件
 // 3. 反爬虫组件
-// 4. 失败重试
-// 5. 友好提示
 // 均不支持
 package gocrawler
 
@@ -14,12 +12,15 @@ import (
 	"log"
 	"net/http"
 	"github.com/PuerkitoBio/goquery"
+	"time"
+	"sync"
 )
 
 type Request struct {
-	URL    string
-	Parser func(resp *Response) (requests []*Request, items []interface{}, err error)
-	Meta   map[string]interface{}
+	triedCount int
+	URL        string
+	Parser     func(resp *Response) (requests []*Request, items []interface{}, err error)
+	Meta       map[string]interface{}
 }
 
 func (r *Request) String() string {
@@ -45,12 +46,16 @@ func (r *Response) String() string {
 type GoCrawler struct {
 	Name            string
 	maxWorkers      int
+	MaxTryCount     int
+	idleCount       int
 	worklist        chan []*Request
 	tokens          chan struct{}
 	seen            map[string]bool
 	items           chan []interface{}
 	itemHandler     func(items []interface{})
 	initialRequests []*Request
+	pendingWorkers  sync.Map
+	anyWorkerStarted bool
 }
 
 func (c *GoCrawler) Init(name string, maxWorkers int, initialRequests []*Request, itemHandler func(items []interface{})) {
@@ -58,9 +63,14 @@ func (c *GoCrawler) Init(name string, maxWorkers int, initialRequests []*Request
 	c.maxWorkers = maxWorkers
 	c.itemHandler = itemHandler
 	c.initialRequests = initialRequests
+	c.MaxTryCount = 12
 }
 
-func (c *GoCrawler) Run() {
+func (c *GoCrawler) Run(stopWhenIdle bool) {
+	if len(c.initialRequests) == 0 {
+		log.Fatal("failed to start GoCrawler: empty initial request")
+	}
+
 	log.Printf("GoCrawler is running with %d initial requests", len(c.initialRequests))
 	c.worklist = make(chan []*Request)
 	c.seen = make(map[string]bool)
@@ -72,47 +82,91 @@ func (c *GoCrawler) Run() {
 		c.worklist <- c.initialRequests
 	}()
 
-	// process items in another goroutine
-	go func() {
-		for items := range c.items {
+	for {
+		select {
+		case requests := <-c.worklist:
+			c.crawlRequests(requests)
+		case items := <-c.items:
 			if c.itemHandler != nil && len(items) > 0 {
 				c.itemHandler(items)
 			}
-		}
-	}()
-
-	for list := range c.worklist {
-		for _, req := range list {
-			if c.seen[req.URL] {
-				log.Printf("Ingore duplicate request: %s", req)
-				continue
-			}
-
-			c.seen[req.URL] = true
-			go func(r *Request) {
-				requests, items, err := c.crawl(r)
-				if err != nil {
-					log.Printf("Failed to crawl: %s", r)
+		default:
+			if c.IsIdle() {
+				if stopWhenIdle {
+					log.Println("Shutdown GoCrawler gracefully~")
 					return
 				}
-				c.worklist <- requests
-				c.items <- items
-			}(req)
+				log.Println("GoCrawler is idle, waiting to be feed with new requests~")
+			}
+			time.Sleep(1 * time.Second)
 		}
 	}
-
-	log.Println("Go crawler stopped")
 }
 
-func (c *GoCrawler) crawl(req *Request) (requests []*Request, items []interface{}, err error) {
+// IsIdle 函数用于判断 Crawler 是否处于空闲状态
+// 当 Crawler 为 Idle 时，必须满足如下几个条件：
+// 1. 要处理的 `worklist` 为空
+// 2. 要处理的 `items` 为空
+// 3. 没有任何在等待中的 worker goroutine
+func (c *GoCrawler) IsIdle() bool {
+	// 如果没有任何 worker 启动过，则始终等待
+	if !c.anyWorkerStarted {
+		return false
+	}
+
+	hasPendingWorkers := false
+	// check if there is any pending workers
+	c.pendingWorkers.Range(func(key, value interface{}) bool {
+		hasPendingWorkers = true
+		return false
+	})
+
+	if hasPendingWorkers {
+		return false
+	}
+
+	return true
+}
+
+func (c *GoCrawler) crawlRequests(requests []*Request) {
+	for _, req := range requests {
+		if c.seen[req.URL] {
+			log.Printf("Ingore duplicate request: %s", req)
+			continue
+		}
+
+		c.seen[req.URL] = true
+		go func(r *Request) {
+			// 标记一下，当任何一个 worker 启动过就可以标记了，不用考虑写冲突的问题
+			c.anyWorkerStarted = true
+			c.pendingWorkers.Store(r.URL, struct{}{})
+			defer func() { c.pendingWorkers.Delete(r.URL) }()
+			requests, items, err := c.crawl(r)
+			if err != nil {
+				log.Printf("Failed to crawl: %s", r)
+				return
+			}
+			c.worklist <- requests
+			c.items <- items
+		}(req)
+	}
+	// sleep for a while, too many requests are not allowed
+	time.Sleep(720 * time.Millisecond)
+}
+
+func (c *GoCrawler) crawl(req *Request) ([]*Request, []interface{}, error) {
 	log.Printf("Crawling request %s", req)
 	// acquire a token
 	c.tokens <- struct{}{}
 	// release token later
 	defer func() { <-c.tokens }()
-	r, err := http.Get(req.URL)
+
+	client := http.Client{Timeout: time.Duration(5 * time.Second)}
+	r, err := client.Get(req.URL)
 	if err != nil {
 		log.Printf("Failed to fetch request %s:%s", req, err)
+		c.seen[req.URL] = false
+		return []*Request{req}, nil, nil
 	}
 
 	var resp Response
@@ -124,10 +178,29 @@ func (c *GoCrawler) crawl(req *Request) (requests []*Request, items []interface{
 		return nil, nil, err
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		// We'll try this request later
+		log.Printf("Invalid response %s", resp)
+		return c.retry(req)
+	}
+
 	if req.Parser != nil {
 		return req.Parser(&resp)
 	}
 	return nil, nil, fmt.Errorf("missing request parser: %s", req)
+}
+
+func (c *GoCrawler) retry(req *Request) ([]*Request, []interface{}, error) {
+	if req.triedCount > c.MaxTryCount {
+		log.Printf("Max tries exceed, ignore request %s", req)
+		return nil, nil, nil
+	}
+	req.triedCount += 1
+	c.seen[req.URL] = false
+	delay := time.Duration(req.triedCount*req.triedCount) * time.Second
+	log.Printf("Retry request %s after %d seconds: +%d", req, delay, req.triedCount)
+	time.Sleep(delay)
+	return []*Request{req}, nil, nil
 }
 
 func (c *GoCrawler) String() string {
