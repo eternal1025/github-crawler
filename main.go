@@ -12,10 +12,15 @@ var initialURLs = []string{
 	"https://github.com/tipsy/github-profile-summary",
 	"https://github.com/tbroadley/github-spellcheck-cli",
 	"https://github.com/go-openapi/strfmt",
+	"https://github.com/aio-libs/aiohttp",
+	"https://github.com/envoyproxy/envoy",
+	"https://github.com/dgraph-io/dgraph",
+	"https://github.com/OfficeDev/office-ui-fabric-react",
+	"https://github.com/tensorflow/tensorflow",
 	}
 
 func main()  {
 	var c = github.GitProjectCrawler{}
-	c.Init("/Users/chris/Desktop/github-projects", 8, initialURLs...)
+	c.Init("/Users/chris/Desktop/github-projects", 12, initialURLs...)
 	c.Run(true)
 }

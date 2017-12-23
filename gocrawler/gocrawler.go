@@ -44,26 +44,32 @@ func (r *Response) String() string {
 }
 
 type GoCrawler struct {
-	Name            string
-	maxWorkers      int
-	MaxTryCount     int
-	idleCount       int
-	worklist        chan []*Request
-	tokens          chan struct{}
-	seen            map[string]bool
-	items           chan []interface{}
-	itemHandler     func(items []interface{})
-	initialRequests []*Request
-	pendingWorkers  sync.Map
-	anyWorkerStarted bool
+	Name                string
+	MaxTryCount         int
+	RequestInterval     time.Duration
+	idleCount           int
+	maxWorkers          int
+	worklist            chan []*Request
+	tokens              chan struct{}
+	seen                map[string]bool
+	items               chan []interface{}
+	itemHandler         func(items []interface{})
+	initialRequests     []*Request
+	pendingWorkersCount int
+	pendingMutex        sync.Mutex // 只有写才会产生竞争
+	anyWorkerStarted    bool
 }
 
 func (c *GoCrawler) Init(name string, maxWorkers int, initialRequests []*Request, itemHandler func(items []interface{})) {
 	c.Name = name
+	c.MaxTryCount = 12
+	if int(c.RequestInterval) == 0 {
+		c.RequestInterval = 100 * time.Millisecond
+	}
+
 	c.maxWorkers = maxWorkers
 	c.itemHandler = itemHandler
 	c.initialRequests = initialRequests
-	c.MaxTryCount = 12
 }
 
 func (c *GoCrawler) Run(stopWhenIdle bool) {
@@ -109,23 +115,12 @@ func (c *GoCrawler) Run(stopWhenIdle bool) {
 // 2. 要处理的 `items` 为空
 // 3. 没有任何在等待中的 worker goroutine
 func (c *GoCrawler) IsIdle() bool {
-	// 如果没有任何 worker 启动过，则始终等待
+	// 如果没有任何 worker 启动过，则始终等待（针对爬虫第一次启动时，特殊处理）
 	if !c.anyWorkerStarted {
 		return false
 	}
 
-	hasPendingWorkers := false
-	// check if there is any pending workers
-	c.pendingWorkers.Range(func(key, value interface{}) bool {
-		hasPendingWorkers = true
-		return false
-	})
-
-	if hasPendingWorkers {
-		return false
-	}
-
-	return true
+	return c.pendingWorkersCount == 0
 }
 
 func (c *GoCrawler) crawlRequests(requests []*Request) {
@@ -139,19 +134,19 @@ func (c *GoCrawler) crawlRequests(requests []*Request) {
 		go func(r *Request) {
 			// 标记一下，当任何一个 worker 启动过就可以标记了，不用考虑写冲突的问题
 			c.anyWorkerStarted = true
-			c.pendingWorkers.Store(r.URL, struct{}{})
-			defer func() { c.pendingWorkers.Delete(r.URL) }()
+			c.incrWorker()
+			defer c.decrWorker()
 			requests, items, err := c.crawl(r)
 			if err != nil {
-				log.Printf("Failed to crawl: %s", r)
+				log.Printf("Failed to crawl %s: %s", r, err)
 				return
 			}
 			c.worklist <- requests
 			c.items <- items
 		}(req)
 	}
-	// sleep for a while, too many requests are not allowed
-	time.Sleep(720 * time.Millisecond)
+	// sleep for a while, it's not polite to open too many requests at the same time~
+	time.Sleep(c.RequestInterval)
 }
 
 func (c *GoCrawler) crawl(req *Request) ([]*Request, []interface{}, error) {
@@ -165,8 +160,7 @@ func (c *GoCrawler) crawl(req *Request) ([]*Request, []interface{}, error) {
 	r, err := client.Get(req.URL)
 	if err != nil {
 		log.Printf("Failed to fetch request %s:%s", req, err)
-		c.seen[req.URL] = false
-		return []*Request{req}, nil, nil
+		return c.retry(req)
 	}
 
 	var resp Response
@@ -179,8 +173,7 @@ func (c *GoCrawler) crawl(req *Request) ([]*Request, []interface{}, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		// We'll try this request later
-		log.Printf("Invalid response %s", resp)
+		log.Printf("Invalid response %s", &resp)
 		return c.retry(req)
 	}
 
@@ -192,17 +185,29 @@ func (c *GoCrawler) crawl(req *Request) ([]*Request, []interface{}, error) {
 
 func (c *GoCrawler) retry(req *Request) ([]*Request, []interface{}, error) {
 	if req.triedCount > c.MaxTryCount {
-		log.Printf("Max tries exceed, ignore request %s", req)
-		return nil, nil, nil
+		return nil, nil, fmt.Errorf("max tries exceed, ignore request %s", req)
 	}
 	req.triedCount += 1
 	c.seen[req.URL] = false
 	delay := time.Duration(req.triedCount*req.triedCount) * time.Second
-	log.Printf("Retry request %s after %d seconds: +%d", req, delay, req.triedCount)
+	log.Printf("Retry request %s after %d seconds: +%d", req, int(delay.Seconds()), req.triedCount)
 	time.Sleep(delay)
 	return []*Request{req}, nil, nil
 }
 
+func (c *GoCrawler) incrWorker() {
+	c.pendingMutex.Lock()
+	defer c.pendingMutex.Unlock()
+	c.pendingWorkersCount += 1
+}
+
+func (c *GoCrawler) decrWorker() {
+	c.pendingMutex.Lock()
+	defer c.pendingMutex.Unlock()
+	if c.pendingWorkersCount > 0 {
+		c.pendingWorkersCount -= 1
+	}
+}
 func (c *GoCrawler) String() string {
 	return fmt.Sprintf("GoCrawler(name=%s, workers=%d, worklist=%d)",
 		c.Name, c.maxWorkers, len(c.worklist))
