@@ -48,7 +48,7 @@ type GoCrawler struct {
 	worklist        chan []*Request
 	tokens          chan struct{}
 	seen            map[string]bool
-	items 			chan []interface{}
+	items           chan []interface{}
 	itemHandler     func(items []interface{})
 	initialRequests []*Request
 }
@@ -134,4 +134,3 @@ func (c *GoCrawler) String() string {
 	return fmt.Sprintf("GoCrawler(name=%s, workers=%d, worklist=%d)",
 		c.Name, c.maxWorkers, len(c.worklist))
 }
-

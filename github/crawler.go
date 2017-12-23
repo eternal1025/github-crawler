@@ -72,6 +72,8 @@ func (p *GitProjectCrawler) ParseIssueCount(resp *gocrawler.Response) ([]*gocraw
 
 		closedCountText := resp.Find("div.table-list-header-toggle.states.float-left.pl-3 > a").Last().Text()
 		proj.ClosedIssuesCount = utils.StrToInt(strings.Replace(closedCountText, "Closed", "", len(closedCountText)))
+	default:
+		log.Printf("Unknown type: %t\n", project)
 	}
 
 	var items []interface{}
