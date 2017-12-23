@@ -30,9 +30,9 @@ func main()  {
 
 # Features
 
-1. Auto retry any failed request
-2. Auto shutdown when there'is no pending request
-3. Simple auto-throttling strategies
+1. Auto retry any failed requests;
+2. Auto shutdown when there'is no pending request;
+3. Simple auto-throttling strategies.
 
 # How to run it?
 
