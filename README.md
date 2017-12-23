@@ -33,3 +33,7 @@ A simple crawler written in Golang 1.9.
     ```
     go run main.go
     ```
+
+# Issues
+
+1. The crawler cannot shutdown itself automatically when there'are no more requests to crawl.

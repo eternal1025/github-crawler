@@ -6,6 +6,7 @@ import (
 	"log"
 	"io/ioutil"
 	"encoding/json"
+	"github.com/0xe8551ccb/utils"
 )
 
 func SaveProjectItem(location string, project *ProjectItem)  {
@@ -32,18 +33,18 @@ func SaveIssueItem(location string, issue *IssueItem)  {
 	}
 
 	filename := path.Join(issueDir, "issues.jl")
-
-	file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, os.ModePerm)
+	err = utils.CreateFileIfNotExist(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	jsonLine, err := json.Marshal(issue)
+	buf, err := json.Marshal(issue)
 	if err != nil {
-		log.Printf("failed to marshal item %s\n", issue)
+		log.Fatalf("failed to marshal item %s\n", issue)
 	}
 
-	file.Write(jsonLine)
-	file.WriteString("\n")
-	log.Fatal(file.Close())
+	err = utils.AppendStringToFile(filename, string(buf), true)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
