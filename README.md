@@ -37,3 +37,7 @@ A simple crawler written in Golang 1.9.
 # Issues
 
 1. The crawler cannot shutdown itself automatically when there'are no more requests to crawl.
+
+# Snapshot
+
+![](http://blog.chriscabin.com/wp-content/uploads/2017/12/Snip20171223_17.png)
