@@ -26,9 +26,9 @@ var initialURLs = []string{
 	"https://github.com/dgraph-io/dgraph",
 	"https://github.com/OfficeDev/office-ui-fabric-react",
 	"https://github.com/tensorflow/tensorflow",
-	}
+}
 
-func main()  {
+func main() {
 	var c = github.GitProjectCrawler{}
 	c.Init("/Users/chris/Desktop/github-projects", 12, initialURLs...)
 	// Set request interval
