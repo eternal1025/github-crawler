@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/0xe8551ccb/github"
+	"time"
 )
 
 var initialURLs = []string{
@@ -22,5 +23,7 @@ var initialURLs = []string{
 func main()  {
 	var c = github.GitProjectCrawler{}
 	c.Init("/Users/chris/Desktop/github-projects", 12, initialURLs...)
+	// Set request interval
+	c.RequestInterval = time.Second * 1
 	c.Run(true)
 }
