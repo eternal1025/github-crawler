@@ -96,6 +96,9 @@ func (c *GoCrawler) IsIdle() bool {
 		return false
 	}
 
+	c.pendingMutex.Lock()
+	defer c.pendingMutex.Unlock()
+
 	return c.pendingWorkersCount == 0
 }
 
@@ -145,7 +148,8 @@ func (c *GoCrawler) crawl(req *Request) ([]*Request, []interface{}, error) {
 	resp.Body = r.Body
 	resp.Doc, err = goquery.NewDocumentFromReader(r.Body)
 	if err != nil {
-		return nil, nil, err
+		log.Printf("Failed to create document for request %s: %s", req, err)
+		return c.retry(req)
 	}
 
 	if resp.StatusCode != http.StatusOK {

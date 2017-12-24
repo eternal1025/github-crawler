@@ -31,6 +31,6 @@ func main() {
 	var c = github.GitProjectCrawler{}
 	c.Init("/Users/chris/Desktop/github-projects", 12, initialURLs...)
 	// Set request interval
-	c.RequestInterval = time.Second * 1
-	c.Run(false)
+	c.RequestInterval = time.Millisecond * 100
+	c.Run(true)
 }
