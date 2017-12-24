@@ -73,6 +73,7 @@ func (c *GoCrawler) Run(stopWhenIdle bool) {
 				c.itemHandler(items)
 			}
 		default:
+			time.Sleep(5 * time.Second)
 			if c.IsIdle() {
 				if stopWhenIdle {
 					log.Println("Shutdown GoCrawler gracefully~")
@@ -80,7 +81,6 @@ func (c *GoCrawler) Run(stopWhenIdle bool) {
 				}
 				log.Println("GoCrawler is idle, waiting to be feed with new requests~")
 			}
-			time.Sleep(1 * time.Second)
 		}
 	}
 }

@@ -18,6 +18,13 @@ var initialURLs = []string{
 	"https://github.com/dgraph-io/dgraph",
 	"https://github.com/OfficeDev/office-ui-fabric-react",
 	"https://github.com/tensorflow/tensorflow",
+	"https://github.com/gin-gonic/gin",
+	"https://github.com/jinzhu/gorm",
+	"https://github.com/alphazero/Go-Redis",
+	"https://github.com/garyburd/redigo",
+	"https://github.com/hashicorp/nomad",
+	"https://github.com/golang/dep",
+	"https://github.com/facebookincubator/create-react-app",
 }
 
 func main() {
@@ -25,5 +32,5 @@ func main() {
 	c.Init("/Users/chris/Desktop/github-projects", 12, initialURLs...)
 	// Set request interval
 	c.RequestInterval = time.Second * 1
-	c.Run(true)
+	c.Run(false)
 }
