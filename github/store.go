@@ -6,17 +6,17 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 )
 
 func SaveProjectItem(location string, project *ProjectItem) {
-	projectLocation := path.Join(location, project.Name)
+	projectLocation := filepath.Join(location, project.Name)
 	err := os.MkdirAll(projectLocation, os.ModePerm)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	filename := path.Join(projectLocation, "summary.json")
+	filename := filepath.Join(projectLocation, "summary.json")
 	jsonLine, err := json.MarshalIndent(project, "", "  ")
 	if err != nil {
 		log.Printf("failed to marshal item %s\n", project)
@@ -26,13 +26,13 @@ func SaveProjectItem(location string, project *ProjectItem) {
 }
 
 func SaveIssueItem(location string, issue *IssueItem) {
-	issueDir := path.Join(location, issue.ProjectName)
+	issueDir := filepath.Join(location, issue.ProjectName)
 	err := os.MkdirAll(issueDir, os.ModePerm)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	filename := path.Join(issueDir, "issues.jl")
+	filename := filepath.Join(issueDir, "issues.jl")
 	buf, err := json.Marshal(issue)
 	if err != nil {
 		log.Printf("failed to marshal item %s\n", issue)
