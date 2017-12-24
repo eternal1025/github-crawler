@@ -4,46 +4,22 @@
 // 2. 登录组件
 // 3. 反爬虫组件
 // 均不支持
+// 后续扩展时，应该抽出一个 engine 来，单独负责爬虫请求调度吧
 package gocrawler
 
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"io"
 	"log"
 	"net/http"
 	"sync"
 	"time"
 )
 
-type Request struct {
-	triedCount int
-	URL        string
-	Parser     func(resp *Response) (requests []*Request, items []interface{}, err error)
-	Meta       map[string]interface{}
-}
-
-func (r *Request) String() string {
-	return fmt.Sprintf("<Request url=%s>", r.URL)
-}
-
-type Response struct {
-	Doc        *goquery.Document
-	Request    *Request
-	StatusCode int
-	Body       io.ReadCloser
-}
-
-// Find is a short-curt method to invoke corresponding method of Doc object
-func (r *Response) Find(selector string) *goquery.Selection {
-	return r.Doc.Find(selector)
-}
-
-func (r *Response) String() string {
-	return fmt.Sprintf("<Response url=%s, status=%d>", r.Request.URL, r.StatusCode)
-}
+type HandleFunc func()
 
 type GoCrawler struct {
+	// 每个 Crawler 尽可能搞个个性化的名字吧，虽然我还没用到它
 	Name                string
 	MaxTryCount         int
 	RequestInterval     time.Duration
@@ -64,7 +40,7 @@ func (c *GoCrawler) Init(name string, maxWorkers int, initialRequests []*Request
 	c.Name = name
 	c.MaxTryCount = 12
 	if int(c.RequestInterval) == 0 {
-		c.RequestInterval = 100 * time.Millisecond
+		c.RequestInterval = 1000 * time.Millisecond
 	}
 
 	c.maxWorkers = maxWorkers
