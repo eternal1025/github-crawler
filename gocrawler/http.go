@@ -21,7 +21,6 @@ type Response struct {
 	Doc        *goquery.Document
 	Request    *Request
 	StatusCode int
-	Body       io.ReadCloser
 }
 
 // Find is a short-curt method to invoke corresponding method of Doc object

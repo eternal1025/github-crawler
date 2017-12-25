@@ -137,15 +137,18 @@ func (c *GoCrawler) crawl(req *Request) ([]*Request, []interface{}, error) {
 
 	client := http.Client{Timeout: time.Duration(5 * time.Second)}
 	r, err := client.Get(req.URL)
+	if r != nil {
+		defer r.Body.Close()
+	}
 	if err != nil {
 		log.Printf("Failed to fetch request %s:%s", req, err)
 		return c.retry(req)
 	}
 
+	defer r.Body.Close()
 	var resp Response
 	resp.Request = req
 	resp.StatusCode = r.StatusCode
-	resp.Body = r.Body
 	resp.Doc, err = goquery.NewDocumentFromReader(r.Body)
 	if err != nil {
 		log.Printf("Failed to create document for request %s: %s", req, err)
