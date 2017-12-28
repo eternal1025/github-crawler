@@ -2,6 +2,7 @@ package gocrawler
 
 import (
 	"fmt"
+
 	"github.com/PuerkitoBio/goquery"
 )
 

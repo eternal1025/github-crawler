@@ -9,11 +9,12 @@ package gocrawler
 
 import (
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
 	"log"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 type HandleFunc func()

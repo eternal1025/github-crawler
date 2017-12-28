@@ -17,7 +17,8 @@ type GitProjectCrawler struct {
 }
 
 // Init 方法初始化爬虫，同时可以指定存储抓取内容的位置，最大的 worker 数量等
-func (p *GitProjectCrawler) Init(storeLocation string, maxWorkers int, urls ...string) {
+func New(storeLocation string, maxWorkers int, urls ...string) *GitProjectCrawler {
+	var p = new(GitProjectCrawler)
 	p.storeLocation = storeLocation
 
 	var requests []*gocrawler.Request
@@ -25,6 +26,7 @@ func (p *GitProjectCrawler) Init(storeLocation string, maxWorkers int, urls ...s
 		requests = append(requests, &gocrawler.Request{URL: url, Parser: p.ParseHome})
 	}
 	p.GoCrawler.Init("GitHub project crawler", maxWorkers, requests, p.ProcessItems)
+	return p
 }
 
 // 解析项目主页，提取必要的信息
@@ -144,10 +146,10 @@ func (p *GitProjectCrawler) ProcessItems(items []interface{}) {
 		switch val := item.(type) {
 		case *ProjectItem:
 			log.Printf("Got project: %s\n", val)
-			SaveProjectItem(p.storeLocation, val)
+			//SaveProjectItem(p.storeLocation, val)
 		case *IssueItem:
 			log.Printf("Got issue: %s\n", val)
-			SaveIssueItem(p.storeLocation, val)
+			//SaveIssueItem(p.storeLocation, val)
 		default:
 			log.Printf("Got unknown item: %v\n", item)
 		}
