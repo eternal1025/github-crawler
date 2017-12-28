@@ -11,7 +11,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -65,6 +68,9 @@ func (c *GoCrawler) Run(stopWhenIdle bool) {
 		c.worklist <- c.initialRequests
 	}()
 
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, syscall.SIGTERM, syscall.SIGINT)
+
 	for {
 		select {
 		case requests := <-c.worklist:
@@ -73,6 +79,9 @@ func (c *GoCrawler) Run(stopWhenIdle bool) {
 			if c.itemHandler != nil && len(items) > 0 {
 				c.itemHandler(items)
 			}
+		case <-done:
+			log.Println("Shutdown GoCrawler gracefully~")
+			return
 		default:
 			time.Sleep(5 * time.Second)
 			if c.IsIdle() {
