@@ -1,13 +1,14 @@
 package github
 
 import (
-	"github.com/0xe8551ccb/gocrawler"
-	"github.com/0xe8551ccb/utils"
-	"github.com/PuerkitoBio/goquery"
 	"log"
 	"path"
 	"strings"
 	"time"
+
+	"github.com/0xe8551ccb/github-crawler/gocrawler"
+	"github.com/0xe8551ccb/github-crawler/utils"
+	"github.com/PuerkitoBio/goquery"
 )
 
 type GitProjectCrawler struct {

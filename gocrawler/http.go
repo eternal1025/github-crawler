@@ -3,7 +3,6 @@ package gocrawler
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"io"
 )
 
 type Request struct {

@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/0xe8551ccb/github"
 	"time"
+
+	"github.com/0xe8551ccb/github-crawler/github"
 )
 
 var initialURLs = []string{

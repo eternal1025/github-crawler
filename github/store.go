@@ -2,11 +2,12 @@ package github
 
 import (
 	"encoding/json"
-	"github.com/0xe8551ccb/utils"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/0xe8551ccb/github-crawler/utils"
 )
 
 func SaveProjectItem(location string, project *ProjectItem) {
