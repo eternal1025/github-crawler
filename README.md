@@ -29,11 +29,10 @@ var initialURLs = []string{
 }
 
 func main() {
-	var c = github.GitProjectCrawler{}
-	c.Init("/Users/chris/Desktop/github-projects", 12, initialURLs...)
+	var crawler = github.New("/Users/chris/Desktop/github-projects", 24, initialURLs...)
 	// Set request interval
-	c.RequestInterval = time.Second * 1
-	c.Run(true)
+	crawler.RequestInterval = time.Millisecond * 100
+	crawler.Run(true)
 }
 ```
 
